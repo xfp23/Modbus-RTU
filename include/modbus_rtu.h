@@ -18,6 +18,7 @@ extern "C"
 {
 #endif
 
+#define RTU_GETBIT(x, byte) ((byte >> x) & 0x01)
 
 RTU_Sta_t RTU_Init(RTU_handle_t *handle,RTU_Conf_t *conf);
 
