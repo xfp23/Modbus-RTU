@@ -19,8 +19,10 @@ typedef enum
 {
     RTU_OK,
     RTU_ERR,
-    RTU_READ,
-    RTU_WRITE,
+    RTU_READREG, // 读寄存器
+    RTU_WRITEREG, // 写寄存器
+    RTU_READCIOL, // 读线圈
+
 }RTU_Sta_t;
 
 /* ---------------- 功能码定义 ---------------- */
@@ -79,7 +81,7 @@ typedef struct
 
 } RTU_SlaveObj;
 
-typedef RTU_SlaveObj *RTU_Slavehandle_t;
+typedef RTU_SlaveObj *RTUSlave_handle_t;
 
 
 

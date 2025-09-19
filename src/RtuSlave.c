@@ -68,7 +68,7 @@ static int rtubuild_register_list(RTU_Register_t *head, RTU_RegisterMap_t *map, 
     return 0;
 }
 
-RTU_Sta_t RTUSlave_Init(RTU_Slavehandle_t *handle, RtuSlave_Conf_t *conf)
+RTU_Sta_t RTUSlave_Init(RTUSlave_handle_t *handle, RtuSlave_Conf_t *conf)
 {
     if (handle == NULL || conf == NULL)
         return RTU_ERR;
@@ -131,7 +131,7 @@ RTU_Sta_t RTUSlave_Init(RTU_Slavehandle_t *handle, RtuSlave_Conf_t *conf)
     return RTU_OK;
 }
 
-void RTU_Deinit(RTU_Slavehandle_t *handle)
+void RTU_Deinit(RTUSlave_handle_t *handle)
 {
     if (handle == NULL || *handle == NULL)
         return;
@@ -169,7 +169,7 @@ static RTU_Register_t *rtu_find_node(RTU_Register_t *head, uint16_t addr)
     return NULL;
 }
 
-RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t size)
+RTU_Sta_t RTUSlave_TimerHandler(RTUSlave_handle_t handle, uint8_t *frame, size_t size)
 {
     if (handle == NULL || frame == NULL)
         return RTU_ERR;
@@ -195,14 +195,13 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
     {
     case RTU_FUNC_READ_COILS:
     {
-        /* validate quantity */
         if (reqNum == 0 || reqNum > 2000)
         {
             return RTU_ERR;
         }
 
         size_t byte_count = (reqNum + 7) / 8;
-        size_t needed = 1 + 1 + 1 + byte_count + 2; // id+func+bytecount+data+crc
+        size_t needed = 1 + 1 + 1 + byte_count + 2;
         if (needed > handle->buf_size)
         {
             return RTU_ERR;
@@ -212,7 +211,6 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
         handle->buf[1] = RTU_FUNC_READ_COILS;
         handle->buf[2] = (uint8_t)byte_count;
 
-        /* find starting node */
         RTU_Register_t *node = rtu_find_node(&handle->coils, regAddr);
         if (node == NULL)
         {
@@ -221,19 +219,16 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
 
         for (uint16_t i = 0; i < reqNum; ++i)
         {
-            /* expected address of this coil */
             uint16_t expect_addr = regAddr + i;
             if (node == NULL || node->address != expect_addr)
             {
-                /* address gap -> protocol error (Illegal Data Address) */
-                // free(resp);
                 return RTU_ERR;
             }
 
             uint8_t bit = 0;
             if (node->value)
             {
-                /* interpret value as uint8_t or bool: non-zero => 1 */
+                 
                 bit = ((*((uint8_t *)node->value)) != 0) ? 1u : 0u;
             }
 
@@ -243,27 +238,25 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
 
             node = node->next;
         }
-
-        /* append CRC */
+ 
         size_t crc_pos = 3 + byte_count;
         uint16_t crc = CRC16(handle->buf, crc_pos);
-        handle->buf[crc_pos + 0] = (uint8_t)(crc & 0x00FF);        // CRC low
-        handle->buf[crc_pos + 1] = (uint8_t)((crc >> 8) & 0x00FF); // CRC high
+        handle->buf[crc_pos + 0] = (uint8_t)(crc & 0x00FF);
+        handle->buf[crc_pos + 1] = (uint8_t)((crc >> 8) & 0x00FF);
 
         resp_len = crc_pos + 2;
         handle->transmit(handle->buf, resp_len);
 
-        ret = RTU_READ;
+        ret = RTU_READCIOL;
         break;
     }
 
     case RTU_FUNC_READ_HOLD_REGS:
     {
-        /* validate quantity */
         if (reqNum == 0 || reqNum > 125)
-        { /* free(resp);*/
+        {  
             return RTU_ERR;
-        } // Modbus limit 125 regs
+        } 
 
         size_t byte_count = reqNum * 2;
         size_t needed = 1 + 1 + 1 + byte_count + 2;
@@ -288,7 +281,6 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
             uint16_t expect_addr = regAddr + i;
             if (node == NULL || node->address != expect_addr)
             {
-                // free(resp);
                 return RTU_ERR;
             }
 
@@ -299,8 +291,8 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
             }
 
             size_t off = 3 + i * 2;
-            handle->buf[off + 0] = (uint8_t)((val >> 8) & 0xFF); // High byte first
-            handle->buf[off + 1] = (uint8_t)(val & 0xFF);        // Low byte
+            handle->buf[off + 0] = (uint8_t)((val >> 8) & 0xFF);  
+            handle->buf[off + 1] = (uint8_t)(val & 0xFF);        
 
             node = node->next;
         }
@@ -312,7 +304,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
 
         resp_len = crc_pos + 2;
         handle->transmit(handle->buf, resp_len);
-        ret = RTU_READ;
+        ret = RTU_READREG;
         break;
     }
 
@@ -321,7 +313,6 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
         RTU_Register_t *node = rtu_find_node(&handle->writeRegs, regAddr);
         if (node == NULL)
         {
-            ;
             return RTU_ERR;
         }
 
@@ -333,7 +324,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
 
         handle->transmit(frame, size);
         resp_len = size;
-        ret = RTU_WRITE;
+        ret = RTU_WRITEREG;
         break;
     }
 
@@ -348,7 +339,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
 
         handle->transmit(frame, size);
         resp_len = size;
-        ret = RTU_WRITE;
+        ret = RTU_WRITEREG;
         break;
     }
 
@@ -357,5 +348,17 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
     }
 
     memset(handle->buf, 0, handle->buf_size);
+    return ret;
+}
+
+RTU_Sta_t RTUSlave_Modifyid(RTUSlave_handle_t handle,uint8_t id)
+{
+    if(handle == NULL)
+    return RTU_ERR;
+
+    if(id == 0 || id >= 0xff)
+    return RTU_ERR;
+
+    handle->id = id;
     return RTU_OK;
 }

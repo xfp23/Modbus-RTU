@@ -62,7 +62,7 @@ void print_register_status(void)
 }
 
 // 模拟接收数据帧并处理
-void simulate_modbus_request(RTU_Slavehandle_t handle, const char* description, uint8_t *frame, size_t size)
+void simulate_modbus_request(RTUSlave_handle_t handle, const char* description, uint8_t *frame, size_t size)
 {
     printf("\n--- %s ---\n", description);
     printf("接收数据帧 (%zu字节): ", size);
@@ -97,7 +97,7 @@ int main()
     printf("Modbus RTU从机库使用示例\n");
     printf("========================\n");
     
-    RTU_Slavehandle_t slave_handle = NULL;
+    RTUSlave_handle_t slave_handle = NULL;
     
     // 定义线圈寄存器映射表 (地址0x0000-0x0009)
     RTU_RegisterMap_t coil_map[] = {
