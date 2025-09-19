@@ -32,7 +32,7 @@ extern "C"
  * @param conf 
  * @return RTU_Sta_t 
  */
-extern RTU_Sta_t RTUSlave_Init(RTU_Slavehandle_t *handle,RTU_Conf_t *conf);
+extern RTU_Sta_t RTUSlave_Init(RTU_Slavehandle_t *handle,RtuSlave_Conf_t *conf);
 
 /**
  * @brief 

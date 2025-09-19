@@ -68,7 +68,7 @@ static int rtubuild_register_list(RTU_Register_t *head, RTU_RegisterMap_t *map, 
     return 0;
 }
 
-RTU_Sta_t RTUSlave_Init(RTU_Slavehandle_t *handle, RTU_Conf_t *conf)
+RTU_Sta_t RTUSlave_Init(RTU_Slavehandle_t *handle, RtuSlave_Conf_t *conf)
 {
     if (handle == NULL || conf == NULL)
         return RTU_ERR;
@@ -187,6 +187,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
     uint8_t func = frame[1];
     uint16_t regAddr = ((uint16_t)frame[2] << 8) | frame[3];
     uint16_t reqNum = ((uint16_t)frame[4] << 8) | frame[5];
+    RTU_Sta_t ret = RTU_ERR;
 
     size_t resp_len = 0;
 
@@ -251,6 +252,8 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
 
         resp_len = crc_pos + 2;
         handle->transmit(handle->buf, resp_len);
+
+        ret = RTU_READ;
         break;
     }
 
@@ -309,6 +312,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
 
         resp_len = crc_pos + 2;
         handle->transmit(handle->buf, resp_len);
+        ret = RTU_READ;
         break;
     }
 
@@ -329,6 +333,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
 
         handle->transmit(frame, size);
         resp_len = size;
+        ret = RTU_WRITE;
         break;
     }
 
@@ -343,6 +348,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTU_Slavehandle_t handle, uint8_t *frame, size_t
 
         handle->transmit(frame, size);
         resp_len = size;
+        ret = RTU_WRITE;
         break;
     }
 

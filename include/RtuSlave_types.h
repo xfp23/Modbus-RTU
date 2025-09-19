@@ -19,6 +19,8 @@ typedef enum
 {
     RTU_OK,
     RTU_ERR,
+    RTU_READ,
+    RTU_WRITE,
 }RTU_Sta_t;
 
 /* ---------------- 功能码定义 ---------------- */
@@ -62,7 +64,7 @@ typedef struct
     RTU_RegisterTable_t coils;       // 线圈表 (功能码 0x01) 用户必须传进来的是数组
     RTU_RegisterTable_t holdingRegs; // 保持寄存器表 (功能码 0x03) 用户必须传进来的是数组
     RTU_RegisterTable_t writeRegs;   // 写寄存器表 (功能码 0x06 / 0x16) 用户必须传进来的是数组
-} RTU_Conf_t;
+} RtuSlave_Conf_t;
 
 typedef struct
 {
