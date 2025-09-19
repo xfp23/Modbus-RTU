@@ -52,18 +52,16 @@ typedef struct
 } RTU_RegisterTable_t;
 
 typedef int (*RTU_TransmitFn)(uint8_t *data, size_t size);
-typedef int (*RTU_ReceiveFn)(uint8_t *data, size_t size);
+// typedef int (*RTU_ReceiveFn)(uint8_t *data, size_t size);
 
 typedef struct
 {
     uint8_t id;              // 设备id
     uint8_t buf_size;      // 数据帧大小
     RTU_TransmitFn transmit;
-    RTU_ReceiveFn receive;
     RTU_RegisterTable_t coils;       // 线圈表 (功能码 0x01) 用户必须传进来的是数组
     RTU_RegisterTable_t holdingRegs; // 保持寄存器表 (功能码 0x03) 用户必须传进来的是数组
     RTU_RegisterTable_t writeRegs;   // 写寄存器表 (功能码 0x06 / 0x16) 用户必须传进来的是数组
-    // RTU_RegisterMap_t 
 } RTU_Conf_t;
 
 typedef struct
@@ -72,15 +70,14 @@ typedef struct
     uint8_t *buf;
     uint16_t buf_size;
     RTU_TransmitFn transmit; // 下行发送接口
-    RTU_ReceiveFn receive;   // 上行接收接口
 
     RTU_Register_t coils;       // 线圈表 (功能码 0x01)
     RTU_Register_t holdingRegs; // 保持寄存器表 (功能码 0x03)
     RTU_Register_t writeRegs;   // 写寄存器表 (功能码 0x06 / 0x16)
 
-} RTU_Obj;
+} RTU_SlaveObj;
 
-typedef RTU_Obj *RTU_handle_t;
+typedef RTU_SlaveObj *RTU_Slavehandle_t;
 
 
 
