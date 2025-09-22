@@ -337,8 +337,18 @@ RTU_Sta_t RTUSlave_TimerHandler(RTUSlave_handle_t handle, uint8_t *frame, size_t
             return RTU_ERR;
         }
 
-        handle->transmit(frame, size);
-        resp_len = size;
+        resp_len = 8;
+        handle->buf[0] = handle->id;
+        handle->buf[1] = RTU_FUNC_WRITE_SINGLE_REG;
+        handle->buf[2] = (uint8_t)((regAddr & 0XFF00) >> 8);
+        handle->buf[3] = (uint8_t)(regAddr & 0x00FF);
+        handle->buf[4] = (uint8_t)((reqNum & 0XFF00) >> 8);
+        handle->buf[5] = (uint8_t)(reqNum & 0x00FF);
+        uint16_t crc =  CRC16(handle->buf,resp_len - 2);
+        handle->buf[6] = (uint8_t)(regAddr & 0x00FF);
+        handle->buf[7] = (uint8_t)((crc & 0XFF00) >> 8); 
+        handle->transmit(handle->buf,resp_len);
+
         ret = RTU_WRITEREG;
         break;
     }

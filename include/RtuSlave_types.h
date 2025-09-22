@@ -31,7 +31,7 @@ typedef enum
     RTU_FUNC_READ_COILS = 0x01,       // 读线圈 (Read Coils)
     RTU_FUNC_READ_HOLD_REGS = 0x03,   // 读保持寄存器 (Read Holding Registers)
     RTU_FUNC_WRITE_SINGLE_REG = 0x06, // 写单个寄存器 (Write Single Register)
-    RTU_FUNC_MASK_WRITE_REG = 0x16    // 寄存器按位写 (Mask Write Register)
+    RTU_FUNC_MASK_WRITE_REG = 0x10    // 寄存器按位写 (Mask Write Register)
 } RTU_FunctionCode_t;
 
 typedef struct RTU_Register
