@@ -228,7 +228,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTUSlave_handle_t handle, uint8_t *frame, size_t
             uint8_t bit = 0;
             if (node->value)
             {
-                 
+
                 bit = ((*((uint8_t *)node->value)) != 0) ? 1u : 0u;
             }
 
@@ -238,7 +238,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTUSlave_handle_t handle, uint8_t *frame, size_t
 
             node = node->next;
         }
- 
+
         size_t crc_pos = 3 + byte_count;
         uint16_t crc = CRC16(handle->buf, crc_pos);
         handle->buf[crc_pos + 0] = (uint8_t)(crc & 0x00FF);
@@ -254,9 +254,9 @@ RTU_Sta_t RTUSlave_TimerHandler(RTUSlave_handle_t handle, uint8_t *frame, size_t
     case RTU_FUNC_READ_HOLD_REGS:
     {
         if (reqNum == 0 || reqNum > 125)
-        {  
+        {
             return RTU_ERR;
-        } 
+        }
 
         size_t byte_count = reqNum * 2;
         size_t needed = 1 + 1 + 1 + byte_count + 2;
@@ -291,8 +291,8 @@ RTU_Sta_t RTUSlave_TimerHandler(RTUSlave_handle_t handle, uint8_t *frame, size_t
             }
 
             size_t off = 3 + i * 2;
-            handle->buf[off + 0] = (uint8_t)((val >> 8) & 0xFF);  
-            handle->buf[off + 1] = (uint8_t)(val & 0xFF);        
+            handle->buf[off + 0] = (uint8_t)((val >> 8) & 0xFF);
+            handle->buf[off + 1] = (uint8_t)(val & 0xFF);
 
             node = node->next;
         }
@@ -328,7 +328,7 @@ RTU_Sta_t RTUSlave_TimerHandler(RTUSlave_handle_t handle, uint8_t *frame, size_t
         break;
     }
 
-    case RTU_FUNC_MASK_WRITE_REG:
+    case RTU_FUNC_MULTIPLE_WRITE_REG:
     {
 
         RTU_Register_t *node = rtu_find_node(&handle->writeRegs, regAddr);
@@ -337,17 +337,35 @@ RTU_Sta_t RTUSlave_TimerHandler(RTUSlave_handle_t handle, uint8_t *frame, size_t
             return RTU_ERR;
         }
 
+        for (uint16_t i = 0; i < reqNum; ++i)
+        {
+            uint16_t expect_addr = regAddr + i;
+            if (node == NULL || node->address != expect_addr)
+            {
+                return RTU_ERR;
+            }
+
+            uint16_t value = ((uint16_t)frame[7 + i * 2] << 8) | frame[8 + i * 2];
+
+            if (node->value)
+            {
+                *((uint16_t *)node->value) = value;
+            }
+
+            node = node->next;
+        }
+        // 构造响应
         resp_len = 8;
         handle->buf[0] = handle->id;
-        handle->buf[1] = RTU_FUNC_WRITE_SINGLE_REG;
+        handle->buf[1] = RTU_FUNC_MULTIPLE_WRITE_REG;
         handle->buf[2] = (uint8_t)((regAddr & 0XFF00) >> 8);
         handle->buf[3] = (uint8_t)(regAddr & 0x00FF);
         handle->buf[4] = (uint8_t)((reqNum & 0XFF00) >> 8);
         handle->buf[5] = (uint8_t)(reqNum & 0x00FF);
-        uint16_t crc =  CRC16(handle->buf,resp_len - 2);
-        handle->buf[6] = (uint8_t)(regAddr & 0x00FF);
-        handle->buf[7] = (uint8_t)((crc & 0XFF00) >> 8); 
-        handle->transmit(handle->buf,resp_len);
+        uint16_t crc = CRC16(handle->buf, resp_len - 2);
+        handle->buf[6] = (uint8_t)(crc & 0x00FF);
+        handle->buf[7] = (uint8_t)((crc & 0XFF00) >> 8);
+        handle->transmit(handle->buf, resp_len);
 
         ret = RTU_WRITEREG;
         break;
@@ -361,13 +379,13 @@ RTU_Sta_t RTUSlave_TimerHandler(RTUSlave_handle_t handle, uint8_t *frame, size_t
     return ret;
 }
 
-RTU_Sta_t RTUSlave_Modifyid(RTUSlave_handle_t handle,uint8_t id)
+RTU_Sta_t RTUSlave_Modifyid(RTUSlave_handle_t handle, uint8_t id)
 {
-    if(handle == NULL)
-    return RTU_ERR;
+    if (handle == NULL)
+        return RTU_ERR;
 
-    if(id == 0 || id >= 0xff)
-    return RTU_ERR;
+    if (id == 0 || id >= 0xff)
+        return RTU_ERR;
 
     handle->id = id;
     return RTU_OK;
