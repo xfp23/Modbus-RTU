@@ -1,6 +1,6 @@
 /**
  * @file modbus_rtu.h
- * @author ...
+ * @author https://github.com/xfp23
  * @brief 
  * @version 0.1
  * @date 2025-09-18
@@ -24,6 +24,8 @@ extern "C"
 #define RTU_GETBYTEL(byte)    ((byte) & 0xff)
 
 #define RTU_MERGEBYTE(H,L)    ((((uint16_t)(H) & 0xff) << 8) | ((L) & 0xff))
+
+#define RTU_GETMAPSIZE(x) sizeof(x) / sizeof(RTU_RegisterMap_t) 
 
 /**
  * @brief 初始化RTU从机
